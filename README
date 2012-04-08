@@ -1,0 +1,54 @@
+This is an example of how to use the new active profile feature added in Spring 3.1 to help with the issue of configuring both bean and properties for different deployment environments. 
+The active profile features are documented in the spring core reference manual here <insert url here>. You can also search google there are a number of good blogs outline it's usage.
+
+I have comnfigured a really simple web app with one controller and one view. The webapp has a dependency on the jar file which contains the properties files required for spring to 
+correctly configure the HomeControler. This simply entails injecting two properties from the propertyConfigurer in to the bean.
+
+If you look at the jar file you will see that there is a stock standard properties which has two properties defined.
+
+environment.property.1
+environment.property.2
+
+You will also see that there is a folder production that also contains a properties file. However this file simple provides and override for the second property
+
+environment.property.2
+
+The intention here is that when deploying to the production environment we want to use the 'environment.property.2' value from the production folder and for all other environments we simple
+want to use the default from the first file.
+
+How do we achive this with Spring new Active Profile.
+
+This is rather simple and is shown in the 'properties-example-webapp-context.xml' configuration on the webapp servlet. In this file you will notice as the last entry in the spring configuration
+you will note a second <beans> element with an attribut of profile="production". These additional beans elements are allowed but according to the spring DTD they must appear last in the 
+spring configuration file.
+
+This element simple defines a second property configurer with a path pointing at the production folder classpath. You will also note that there is also an order attribute specified. This order
+tells spring that properties with in this configurer take precendence over an other secondary property configurer. Essentially this states that when run in the production envrionment then use the properties
+defined in this property configurer over other also defined.
+
+So how do you test this with the example application?
+
+The first thing we need to do is now how to specify which active profile to use. I did this simply be setting an additional JVM argument in the spring tc server configuration.
+
+-Dspring.profiles.active="production"
+
+This argument is fairly straight foward and clear as to what is happening. It is also important to note that you can also active mutiple active profiles by providing a comma seperated list of values.
+It is also prossible to specify this property in  a number of ways property file, system variable, jvm variable, servlet variable, etc.
+
+Feel free and give it a shot it appears this may be a nicer way to define different beans for different environments as will.
+
+
+Positives
+-----------------------------------
+Allows us to define property based of the deployed environment over having to build a new artifact for each environment.
+Allows us to deploy a single artifact over deploying an individual war and then a properties component.
+
+
+Negatives
+----------------------------------
+If we package the jar file as I have in the example it will be harder to change this properties once deployed. We have had issue in production where we have had to change properties live and restart.
+Thou this has also caused issues where these changes were made to a live environment and forgotten to be made in the source base, meaning these changes were reverted upon the next release. I suspect that 
+we will need to make decision upon how and what this policy will be.
+
+
+
